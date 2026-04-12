@@ -14,8 +14,7 @@ public class UsuarioCllbckImpl extends UnicastRemoteObject implements UsuarioCll
     @Override
     public void notificar(String mensaje, int cantidadUsuarios) throws RemoteException
     {
-        System.out.println("Mensaje enviado del servidor: " + mensaje);       
-        System.out.println("Cantidad de usuarios conectados: " + cantidadUsuarios );
+        System.out.println("Mensaje enviado del servidor: " + mensaje);
     }
 
 }
