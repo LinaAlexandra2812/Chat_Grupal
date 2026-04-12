@@ -6,7 +6,7 @@ import java.rmi.RemoteException;
 
 public interface ControladorServidorChatInt extends Remote
 {
-    public boolean registrarReferenciaUsuario(UsuarioCllbckInt  usuario) throws RemoteException;
+    boolean registrarReferenciaUsuario(String nickName, UsuarioCllbckInt usuario) throws RemoteException;
     public void enviarMensaje(String mensaje)throws RemoteException;
 }
 

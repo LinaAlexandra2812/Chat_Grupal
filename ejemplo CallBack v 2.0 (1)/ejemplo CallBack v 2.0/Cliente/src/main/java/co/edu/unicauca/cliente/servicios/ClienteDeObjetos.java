@@ -19,13 +19,22 @@ public class ClienteDeObjetos
             direccionIpRMIRegistry = UtilidadesConsola.leerCadena();
             System.out.println("Cual es el número de puerto por el cual escucha el rmiregistry ");
             numPuertoRMIRegistry = UtilidadesConsola.leerEntero(); 
-            System.out.println("Digite el mensaje a enviar al servidor: ");
-            String mensaje=UtilidadesConsola.leerCadena();
 
             servidor = (ControladorServidorChatInt) UtilidadesRegistroC.obtenerObjRemoto(numPuertoRMIRegistry,direccionIpRMIRegistry, "ServidorChat");
 
-            UsuarioCllbckImpl objNuevoUsuario= new UsuarioCllbckImpl();
-            servidor.registrarReferenciaUsuario(objNuevoUsuario);
+            System.out.println("Digite su nickName: ");
+            String nickName = UtilidadesConsola.leerCadena();
+
+            UsuarioCllbckImpl objNuevoUsuario = new UsuarioCllbckImpl();
+            boolean registrado = servidor.registrarReferenciaUsuario(nickName, objNuevoUsuario);
+
+            if (!registrado) {
+                System.out.println("No fue posible registrar el usuario. Nick repetido o invalido.");
+                return;
+            }
+
+            System.out.println("Digite el mensaje a enviar al servidor: ");
+            String mensaje = UtilidadesConsola.leerCadena();
             servidor.enviarMensaje(mensaje);
 
         }
