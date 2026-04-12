@@ -1,0 +1,136 @@
+CHAT GRUPAL - RMI con Callback
+================================
+
+Aplicación de chat en tiempo real para múltiples clientes usando Java RMI con el patrón Callback.
+El servidor mantiene las referencias remotas de cada cliente y les reenvía los mensajes en cuanto
+los recibe. Cada cliente puede enviar mensajes, consultar los usuarios activos y salir del chat
+de forma segura.
+
+REQUISITOS
+----------
+- Java 17 o superior
+- Maven 3.6 o superior
+- Los proyectos Servidor y Cliente deben compilarse por separado
+
+
+ESTRUCTURA DEL PROYECTO
+-----------------------
+ejemplo CallBack v 2.0/
+  Servidor/   -> Proyecto Maven del servidor RMI
+  Cliente/    -> Proyecto Maven del cliente RMI
+
+
+PASO 1 - COMPILAR Y ARRANCAR EL SERVIDOR
+-----------------------------------------
+Abre una terminal en la carpeta Servidor y ejecuta:
+
+    mvn compile exec:java
+
+    o
+
+    cmd /C ""C:\Program Files\Java\jdk-17\bin\java.exe" -XX:+ShowCodeDetailsInExceptionMessages -cp "D:\Universidad\2026 - I\Sistemas Distribuidos\Taller Chat Grupal\Chat_Grupal\ejemplo CallBack v 2.0 (1)\ejemplo CallBack v 2.0\Servidor\target\classes" co.edu.unicauca.servidor.servicios.ServidorDeObjetos "
+
+El programa pedirá dos datos:
+
+  1. Dirección IP del rmiRegistry
+     -> Si servidor y clientes están en la misma máquina: localhost
+     -> Si están en red: la IP local de la máquina servidora (ej. 192.168.1.10)
+
+  2. Puerto del rmiRegistry
+     -> Puerto estándar de RMI: 1099
+
+El servidor queda en ejecución esperando conexiones. No cerrar esta terminal.
+
+
+PASO 2 - COMPILAR Y ARRANCAR CADA CLIENTE
+-------------------------------------------
+Abre una terminal independiente por cada cliente en la carpeta Cliente y ejecuta:
+
+    mvn compile exec:java
+
+    o
+
+    cmd /C ""C:\Program Files\Java\jdk-17\bin\java.exe" -XX:+ShowCodeDetailsInExceptionMessages -cp "D:\Universidad\2026 - I\Sistemas Distribuidos\Taller Chat Grupal\Chat_Grupal\ejemplo CallBack v 2.0 (1)\ejemplo CallBack v 2.0\Cliente\target\classes" co.edu.unicauca.cliente.servicios.ClienteDeObjetos "
+
+El programa pedirá:
+
+  1. Dirección IP del rmiRegistry
+     -> La misma IP ingresada al arrancar el servidor
+
+  2. Puerto del rmiRegistry
+     -> El mismo puerto ingresado al arrancar el servidor (1099)
+
+  3. NickName
+     -> Nombre único para identificarse en el chat
+     -> Si el nick ya está en uso, el cliente no podrá registrarse
+
+
+PASO 3 - USAR EL CHAT
+----------------------
+Una vez registrado, el cliente muestra un menú con las siguientes opciones:
+
+  === MENÚ ===
+  1. Enviar mensaje
+  2. Ver usuarios activos
+  3. Salir del chat
+
+  Opción 1 - Enviar mensaje
+  -------------------------
+  El cliente escribe un texto y lo envía al servidor. El servidor reenvía el mensaje
+  a TODOS los clientes registrados (incluido el emisor) con el formato:
+
+      [nickName]: texto del mensaje
+
+  Todos los clientes reciben además la cantidad actual de usuarios conectados.
+
+  Opción 2 - Ver usuarios activos
+  --------------------------------
+  El servidor devuelve la lista de nickNames de todos los clientes actualmente
+  registrados. Se muestra en pantalla con el conteo total.
+
+  Ejemplo de salida:
+      Usuarios activos (3):
+        - Ana
+        - Luis
+        - Carlos
+
+  Opción 3 - Salir del chat
+  --------------------------
+  El cliente notifica al servidor que desea desconectarse. El servidor:
+    1. Elimina la referencia del cliente del registro interno.
+    2. Envía un mensaje de aviso a todos los demás clientes:
+           *** nickName ha salido del chat ***
+  El cliente finaliza su ejecución de forma limpia.
+
+
+SALIDA ABRUPTA (cierre de terminal)
+-------------------------------------
+Si un cliente cierra la terminal sin usar la opción 3, un Shutdown Hook registrado
+al iniciar el cliente intenta llamar a desconectarUsuario en el servidor antes de
+que el proceso muera. Esto cubre la mayoría de cierres inesperados.
+
+Si la notificación no llega (corte de red, kill forzado), el servidor detectará
+que el cliente no responde la próxima vez que intente enviarle un mensaje y lo
+eliminará automáticamente del registro en ese momento.
+
+
+EJEMPLO DE SESIÓN DE PRUEBA
+-----------------------------
+1. Arrancar el servidor  -> IP: localhost, Puerto: 1099
+2. Arrancar Cliente A    -> IP: localhost, Puerto: 1099, Nick: Ana
+3. Arrancar Cliente B    -> IP: localhost, Puerto: 1099, Nick: Luis
+4. Desde A, opción 2     -> muestra: Ana, Luis
+5. Desde A, opción 1     -> mensaje "[Ana]: Hola!" aparece en B (y en A)
+6. Desde B, opción 1     -> mensaje "[Luis]: Hola Ana!" aparece en A (y en B)
+7. Desde A, opción 3     -> B recibe: "*** Ana ha salido del chat ***"
+8. Desde B, opción 2     -> muestra solo: Luis
+
+
+NOTAS TÉCNICAS
+--------------
+- El servidor usa un HashMap<String, UsuarioCllbckInt> protegido con synchronized
+  para manejar el acceso concurrente de múltiples clientes.
+- La iteración sobre el mapa durante la notificación usa Iterator explícito para
+  poder eliminar clientes muertos sin ConcurrentModificationException.
+- El conteo de usuarios enviado en cada notificación refleja el estado actual del
+  mapa en el momento de la llamada.
