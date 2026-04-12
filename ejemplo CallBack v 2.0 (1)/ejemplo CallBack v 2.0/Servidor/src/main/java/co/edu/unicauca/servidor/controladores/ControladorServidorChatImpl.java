@@ -5,6 +5,7 @@ import co.edu.unicauca.cliente.controladores.UsuarioCllbckInt;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,25 +16,28 @@ public class ControladorServidorChatImpl extends UnicastRemoteObject implements 
     public ControladorServidorChatImpl() throws RemoteException
     {
         super();//asignamos el puerto 
-        usuarios= new ArrayList();
+        usuarios= new HashMap<>();
     }
     
     @Override
-    public synchronized boolean  registrarReferenciaUsuario(UsuarioCllbckInt usuario) throws RemoteException 
-    {
-       //método que unicamente puede ser accedido por un hilo
-	System.out.println("Invocando al método registrar usuario desde el servidor");
-        boolean bandera=false;
-        if (!usuarios.contains(usuario))
-        {
-            bandera=usuarios.add(usuario);  
-        }        
-        return bandera;       
+    public synchronized boolean registrarReferenciaUsuario(String nickName, UsuarioCllbckInt usuario) throws RemoteException {
+        System.out.println("Invocando al metodo registrar usuario desde el servidor");
+
+        if (nickName == null || nickName.isBlank() || usuario == null) {
+            return false;
+        }
+
+        if (usuarios.containsKey(nickName)) {
+            return false;
+        }
+
+        usuarios.put(nickName, usuario);
+        return true;
     }
 
     @Override
-    public void desconectarUsuario(String nickname) {
-        
+    public synchronized void desconectarUsuario(String nickName) throws RemoteException {
+        usuarios.remove(nickName);
     }
    
     @Override
@@ -45,10 +49,9 @@ public class ControladorServidorChatImpl extends UnicastRemoteObject implements 
     private void notificarUsuarios(String mensaje) throws RemoteException 
     {
         System.out.println("Invocando al método notificar usuarios desde el servidor");
-        for(UsuarioCllbckInt objUsuario: usuarios)
+        for (UsuarioCllbckInt objUsuario : usuarios.values()) 
         {
-            objUsuario.notificar(mensaje, usuarios.size());//el servidor hace el callback
-            
+            objUsuario.notificar(mensaje, usuarios.size());
         }
     }
 
@@ -56,4 +59,6 @@ public class ControladorServidorChatImpl extends UnicastRemoteObject implements 
     {
         return new ArrayList<>(usuarios.keySet());
     }
+
+    
 }
