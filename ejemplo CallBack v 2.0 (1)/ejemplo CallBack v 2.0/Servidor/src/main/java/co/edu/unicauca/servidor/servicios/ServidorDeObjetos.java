@@ -11,13 +11,27 @@ public class ServidorDeObjetos
     public static void main(String args[]) throws RemoteException
     {        
          
-        int numPuertoRMIRegistry = 0;
-        String direccionIpRMIRegistry = "";
-                       
-        System.out.println("Ingrese la dirección IP donde se encuentra el rmiRegistry (localhost):");
-        direccionIpRMIRegistry = UtilidadesConsola.leerCadena();
-        System.out.println("Ingrese el número de puerto por el cual escucha el rmiRegistry: ");
-        numPuertoRMIRegistry = UtilidadesConsola.leerEntero(); 
+        int numPuertoRMIRegistry = 1099;
+        String direccionIpRMIRegistry = "localhost";
+
+        java.util.Properties prop = new java.util.Properties();
+        java.io.File file = new java.io.File("config.properties");
+        if (!file.exists()) {
+            file = new java.io.File("../config.properties");
+        }
+
+        if (file.exists()) {
+            try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
+                prop.load(fis);
+                direccionIpRMIRegistry = prop.getProperty("server.ip", "localhost");
+                numPuertoRMIRegistry = Integer.parseInt(prop.getProperty("server.port", "1099"));
+                System.out.println("Configuración cargada desde " + file.getAbsolutePath() + ": IP=" + direccionIpRMIRegistry + ", Puerto=" + numPuertoRMIRegistry);
+            } catch (Exception e) {
+                System.err.println("Error al leer el archivo de propiedades: " + e.getMessage());
+            }
+        } else {
+            System.out.println("No se encontró config.properties. Usando valores predeterminados (localhost:1099).");
+        }
      
         ControladorServidorChatImpl objRemoto = new ControladorServidorChatImpl();//se leasigna el puerto de escucha del objeto remoto
         

@@ -12,12 +12,27 @@ public class ClienteDeObjetos
     {
         try
         {
-            int numPuertoRMIRegistry = 0;
-            String direccionIpRMIRegistry = "";
-            System.out.println("Ingrese la dirección IP donde se encuentra el rmiregistry: ");
-            direccionIpRMIRegistry = UtilidadesConsola.leerCadena();
-            System.out.println("Ingrese el número de puerto por el cual escucha el rmiregistry: ");
-            numPuertoRMIRegistry = UtilidadesConsola.leerEntero();
+            int numPuertoRMIRegistry = 1099;
+            String direccionIpRMIRegistry = "localhost";
+
+            java.util.Properties prop = new java.util.Properties();
+            java.io.File file = new java.io.File("config.properties");
+            if (!file.exists()) {
+                file = new java.io.File("../config.properties");
+            }
+
+            if (file.exists()) {
+                try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
+                    prop.load(fis);
+                    direccionIpRMIRegistry = prop.getProperty("server.ip", "localhost");
+                    numPuertoRMIRegistry = Integer.parseInt(prop.getProperty("server.port", "1099"));
+                    System.out.println("Configuración cargada desde " + file.getAbsolutePath() + ": IP=" + direccionIpRMIRegistry + ", Puerto=" + numPuertoRMIRegistry);
+                } catch (Exception e) {
+                    System.err.println("Error al leer el archivo de propiedades: " + e.getMessage());
+                }
+            } else {
+                System.out.println("No se encontró config.properties. Usando valores predeterminados (localhost:1099).");
+            }
 
             ControladorServidorChatInt servidor = (ControladorServidorChatInt)
                     UtilidadesRegistroC.obtenerObjRemoto(numPuertoRMIRegistry, direccionIpRMIRegistry, "ServidorChat");
@@ -48,9 +63,10 @@ public class ClienteDeObjetos
             {
                 System.out.println("\n=== MENÚ ===");
                 System.out.println("1. Enviar mensaje");
-                System.out.println("2. Ver usuarios activos");
+                System.out.println("2. Ver lista de usuarios activos");
                 System.out.println("3. Enviar mensaje privado");
-                System.out.println("4. Salir del chat");
+                System.out.println("4. Consultar cantidad de usuarios activos");
+                System.out.println("5. Salir del chat");
                 int opcion = UtilidadesConsola.leerEntero();
 
                 switch (opcion)
@@ -63,7 +79,7 @@ public class ClienteDeObjetos
 
                     case 2:
                         List<String> usuarios = servidor.obtenerUsuarios();
-                        System.out.println("Usuarios activos (" + usuarios.size() + "):");
+                        System.out.println("Lista de usuarios activos (" + usuarios.size() + "):");
                         for (String u : usuarios)
                         {
                             System.out.println("  - " + u);
@@ -86,6 +102,11 @@ public class ClienteDeObjetos
                         break;
 
                     case 4:
+                        int cantidad = servidor.consultarCantidadUsuarios();
+                        System.out.println("Cantidad de usuarios activos consultada al servidor: " + cantidad);
+                        break;
+
+                    case 5:
                         servidor.desconectarUsuario(nickName);
                         System.out.println("Ha salido del chat. ¡Hasta luego!");
                         continuar = false;

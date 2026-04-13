@@ -107,5 +107,9 @@ public class ControladorServidorChatImpl extends UnicastRemoteObject implements 
     public List<String> obtenerUsuarios() throws RemoteException {
         return new ArrayList<>(usuarios.keySet());
     }
+    @Override
+    public int consultarCantidadUsuarios() throws RemoteException {
+        return usuarios.size();
+    }
 
 }
