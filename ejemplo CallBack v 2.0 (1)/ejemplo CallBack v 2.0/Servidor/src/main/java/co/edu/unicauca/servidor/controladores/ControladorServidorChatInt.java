@@ -9,5 +9,6 @@ public interface ControladorServidorChatInt extends Remote {
     boolean registrarReferenciaUsuario(String nickName, UsuarioCllbckInt usuario) throws RemoteException;
     void desconectarUsuario(String nickName) throws RemoteException;
     void enviarMensaje(String mensaje) throws RemoteException;
+    void enviarMensajePrivado(String emisor, String destino, String mensaje) throws RemoteException;
     List<String> obtenerUsuarios() throws RemoteException;
 }

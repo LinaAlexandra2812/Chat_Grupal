@@ -11,6 +11,9 @@ import java.util.Map;
 
 public class ControladorServidorChatImpl extends UnicastRemoteObject implements ControladorServidorChatInt {
 
+    private static final String MENSAJE_RECEPTOR_DESCONECTADO =
+            "El mensaje no se logró enviar porque el usuario receptor no está conectado";
+
     private final Map<String, UsuarioCllbckInt> usuarios;// lista que almacena la referencia remota de los clientes
 
     public ControladorServidorChatImpl() throws RemoteException {
@@ -45,6 +48,45 @@ public class ControladorServidorChatImpl extends UnicastRemoteObject implements 
     @Override
     public synchronized void enviarMensaje(String mensaje) throws RemoteException {
         notificarUsuarios(mensaje);
+    }
+
+    @Override
+    public synchronized void enviarMensajePrivado(String emisor, String destino, String mensaje)
+            throws RemoteException {
+        System.out.println("Invocando al método enviar mensaje privado desde el servidor");
+
+        if (emisor == null || emisor.isBlank() || destino == null || destino.isBlank() || mensaje == null) {
+            return;
+        }
+
+        UsuarioCllbckInt usuarioDestino = usuarios.get(destino);
+        if (usuarioDestino == null) {
+            notificarErrorAlEmisor(emisor);
+            return;
+        }
+
+        try {
+            usuarioDestino.notificar("[Privado de " + emisor + "]: " + mensaje, usuarios.size());
+        } catch (RemoteException e) {
+            System.out.println("Cliente receptor '" + destino + "' no responde. Eliminando del registro.");
+            usuarios.remove(destino);
+            notificarErrorAlEmisor(emisor);
+        }
+    }
+
+    private void notificarErrorAlEmisor(String emisor) {
+        UsuarioCllbckInt usuarioEmisor = usuarios.get(emisor);
+
+        if (usuarioEmisor == null) {
+            return;
+        }
+
+        try {
+            usuarioEmisor.notificar(MENSAJE_RECEPTOR_DESCONECTADO, usuarios.size());
+        } catch (RemoteException ex) {
+            System.out.println("Cliente emisor '" + emisor + "' no responde. Eliminando del registro.");
+            usuarios.remove(emisor);
+        }
     }
 
     private synchronized void notificarUsuarios(String mensaje) throws RemoteException {

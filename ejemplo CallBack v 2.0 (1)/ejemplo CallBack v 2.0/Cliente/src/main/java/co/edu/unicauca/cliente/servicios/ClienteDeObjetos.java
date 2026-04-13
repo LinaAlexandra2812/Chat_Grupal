@@ -49,7 +49,8 @@ public class ClienteDeObjetos
                 System.out.println("\n=== MENÚ ===");
                 System.out.println("1. Enviar mensaje");
                 System.out.println("2. Ver usuarios activos");
-                System.out.println("3. Salir del chat");
+                System.out.println("3. Enviar mensaje privado");
+                System.out.println("4. Salir del chat");
                 int opcion = UtilidadesConsola.leerEntero();
 
                 switch (opcion)
@@ -70,6 +71,21 @@ public class ClienteDeObjetos
                         break;
 
                     case 3:
+                        System.out.println("Digite el nickName del usuario destino: ");
+                        String nickDestino = UtilidadesConsola.leerCadena();
+
+                        if (nickDestino == null || nickDestino.isBlank())
+                        {
+                            System.out.println("Debe ingresar un nickName destino válido.");
+                            break;
+                        }
+
+                        System.out.println("Escriba el mensaje privado: ");
+                        String mensajePrivado = UtilidadesConsola.leerCadena();
+                        servidor.enviarMensajePrivado(nickName, nickDestino, mensajePrivado);
+                        break;
+
+                    case 4:
                         servidor.desconectarUsuario(nickName);
                         System.out.println("Ha salido del chat. ¡Hasta luego!");
                         continuar = false;
