@@ -11,8 +11,7 @@ import java.util.Map;
 
 public class ControladorServidorChatImpl extends UnicastRemoteObject implements ControladorServidorChatInt {
 
-    private static final String MENSAJE_RECEPTOR_DESCONECTADO =
-            "El mensaje no se logró enviar porque el usuario receptor no está conectado";
+    private static final String MENSAJE_RECEPTOR_DESCONECTADO = "El mensaje no se logró enviar porque el usuario receptor no está conectado";
 
     private final Map<String, UsuarioCllbckInt> usuarios;// lista que almacena la referencia remota de los clientes
 
@@ -91,22 +90,30 @@ public class ControladorServidorChatImpl extends UnicastRemoteObject implements 
 
     private synchronized void notificarUsuarios(String mensaje) throws RemoteException {
         System.out.println("Invocando al método notificar usuarios desde el servidor");
+
         Iterator<Map.Entry<String, UsuarioCllbckInt>> it = usuarios.entrySet().iterator();
+        List<String> eliminados = new ArrayList<>();
+
         while (it.hasNext()) {
             Map.Entry<String, UsuarioCllbckInt> entry = it.next();
             try {
                 entry.getValue().notificar(mensaje, usuarios.size());
             } catch (RemoteException e) {
                 System.out.println("Cliente '" + entry.getKey() + "' no responde. Eliminando del registro.");
+                eliminados.add(entry.getKey());
                 it.remove();
-                notificarUsuarios("*** " + entry.getKey() + " ha salido del chat ***");
             }
+        }
+
+        for (String nick : eliminados) {
+            System.out.println("*** " + nick + " ha salido del chat ***");
         }
     }
 
     public List<String> obtenerUsuarios() throws RemoteException {
         return new ArrayList<>(usuarios.keySet());
     }
+
     @Override
     public int consultarCantidadUsuarios() throws RemoteException {
         return usuarios.size();
